@@ -12,7 +12,7 @@ public class GuiPlayer implements Player {
 
 	@Override
 	public int[] move() {
-		return null;
+		return new int[] { 0, 0 };
 	}
 
 	@Override

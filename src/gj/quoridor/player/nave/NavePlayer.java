@@ -6,11 +6,15 @@ public class NavePlayer implements Player {
 	private Player evilPlayer = null;
 
 	public NavePlayer() {
-		try {
-			Class.forName("gj.quoridor.engine.Quoridor");
-			evilPlayer = new NormalPlayer();
-		} catch (ClassNotFoundException e) {
-			evilPlayer = new GuiPlayer();
+		StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+		for (int i = 0; i < stackTrace.length; i++) {
+			if (stackTrace[i].getClassName().equalsIgnoreCase("gj.quoridor.engine.quoridor")) {
+				evilPlayer = new NormalPlayer();
+				break;
+			} else if (stackTrace[i].getClassName().equalsIgnoreCase("gj.quoridor.engine.quoridorgui")) {
+				evilPlayer = new GuiPlayer();
+				break;
+			}
 		}
 	}
 
