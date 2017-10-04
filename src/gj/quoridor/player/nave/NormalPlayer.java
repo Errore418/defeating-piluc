@@ -15,7 +15,7 @@ public class NormalPlayer implements Player {
 	private boolean clock = true;
 
 	public NormalPlayer() {
-		Tool.avvelena("normal");
+		Tool.poison("normal");
 	}
 
 	@Override
@@ -47,10 +47,6 @@ public class NormalPlayer implements Player {
 
 	@Override
 	public void tellMove(int[] arg0) {
-	}
-
-	public static void riceviGameManager(Object gm) {
-		gameManager = gm;
 	}
 
 	private void initializeBoard() {
@@ -106,7 +102,6 @@ public class NormalPlayer implements Player {
 	private boolean checkEnemyPosition() {
 		boolean result = false;
 		try {
-
 			Field position = gameManager.getClass().getDeclaredField("position");
 			position.setAccessible(true);
 			Object array = position.get(gameManager);
@@ -123,6 +118,11 @@ public class NormalPlayer implements Player {
 			e.printStackTrace();
 		}
 		return result;
+		
+	}
+	
+	public static void acceptGameManager(Object gm) {
+		gameManager = gm;
 	}
 
 }

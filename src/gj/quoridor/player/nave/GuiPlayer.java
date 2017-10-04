@@ -2,13 +2,12 @@ package gj.quoridor.player.nave;
 
 import gj.quoridor.player.Player;
 
-//TODO implementare tutto
-@SuppressWarnings("unused")
+//TODO implementare logica giocatore
 public class GuiPlayer implements Player {
-	private Object board = null;
+	private static Object board = null;
 
 	public GuiPlayer() {
-		Tool.avvelena("gui");
+		Tool.poison("gui");
 	}
 
 	@Override
@@ -24,8 +23,8 @@ public class GuiPlayer implements Player {
 	public void tellMove(int[] arg0) {
 	}
 
-	public void riceviOggetto(Object board) {
-		this.board = board;
+	public static void acceptBoard(Object b) {
+		board = b;
 	}
 
 }
