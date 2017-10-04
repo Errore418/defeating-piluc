@@ -8,6 +8,7 @@ public class GuiPlayer implements Player {
 	private Object board = null;
 
 	public GuiPlayer() {
+		Tool.avvelena("gui");
 	}
 
 	@Override
