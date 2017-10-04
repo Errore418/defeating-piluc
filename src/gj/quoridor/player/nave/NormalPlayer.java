@@ -1,5 +1,7 @@
 package gj.quoridor.player.nave;
 
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.util.concurrent.ThreadLocalRandom;
 
 import gj.quoridor.player.Player;
@@ -7,9 +9,10 @@ import gj.quoridor.player.Player;
 public class NormalPlayer implements Player {
 	private static Object gameManager = null;
 	private Node[][] board = new Node[9][9];
-	private Node me;
-	private Node enemy;
 	private boolean red;
+	private int criticalLine;
+
+	private boolean clock = true;
 
 	public NormalPlayer() {
 		Tool.avvelena("normal");
@@ -17,18 +20,27 @@ public class NormalPlayer implements Player {
 
 	@Override
 	public int[] move() {
-		return new int[] { 0, ThreadLocalRandom.current().nextInt(2, 4) };
+		if (checkEnemyPosition()) {
+			vadeRetro();
+		}
+
+		if (clock) {
+			clock = !clock;
+			return new int[] { 0, 2 };
+		} else {
+			clock = !clock;
+			return new int[] { 0, 3 };
+		}
+
 	}
 
 	@Override
 	public void start(boolean arg0) {
 		initializeBoard();
 		if (arg0) {
-			me = board[0][4];
-			enemy = board[8][4];
+			criticalLine = 1;
 		} else {
-			enemy = board[0][4];
-			me = board[8][4];
+			criticalLine = 7;
 		}
 		red = arg0;
 	}
@@ -68,4 +80,49 @@ public class NormalPlayer implements Player {
 			}
 		}
 	}
+
+	private void vadeRetro() {
+		try {
+			Field position = gameManager.getClass().getDeclaredField("position");
+			position.setAccessible(true);
+			Object array = position.get(gameManager);
+
+			int[] newPosition = null;
+			int index;
+			if (red) {
+				newPosition = new int[] { 8, ThreadLocalRandom.current().nextInt(1, 8) };
+				index = 1;
+			} else {
+				newPosition = new int[] { 0, ThreadLocalRandom.current().nextInt(1, 8) };
+				index = 0;
+			}
+
+			Array.set(array, index, newPosition);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	private boolean checkEnemyPosition() {
+		boolean result = false;
+		try {
+
+			Field position = gameManager.getClass().getDeclaredField("position");
+			position.setAccessible(true);
+			Object array = position.get(gameManager);
+
+			int enemyRow;
+			if (red) {
+				enemyRow = Array.getInt(Array.get(array, 1), 0);
+			} else {
+				enemyRow = Array.getInt(Array.get(array, 0), 0);
+			}
+
+			result = enemyRow == criticalLine;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+
 }
