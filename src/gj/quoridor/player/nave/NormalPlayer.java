@@ -1,13 +1,15 @@
 package gj.quoridor.player.nave;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
 import java.util.concurrent.ThreadLocalRandom;
 
 import gj.quoridor.player.Player;
 
 public class NormalPlayer implements Player {
 	private static Object gameManager = null;
+	private Node[][] board = new Node[9][9];
+	private Node me;
+	private Node enemy;
+	private boolean red;
 
 	public NormalPlayer() {
 		Tool.avvelena("normal");
@@ -20,25 +22,15 @@ public class NormalPlayer implements Player {
 
 	@Override
 	public void start(boolean arg0) {
-		try {
-			Field position = gameManager.getClass().getDeclaredField("position");
-			position.setAccessible(true);
-			Object array = position.get(gameManager);
-
-			int[] newPosition = null;
-			int index = 0;
-			if (arg0) {
-				newPosition = new int[] { 8, ThreadLocalRandom.current().nextInt(1, 8) };
-				index = 0;
-			} else {
-				newPosition = new int[] { 0, ThreadLocalRandom.current().nextInt(1, 8) };
-				index = 1;
-			}
-
-			Array.set(array, index, newPosition);
-		} catch (Exception e) {
-			e.printStackTrace();
+		initializeBoard();
+		if (arg0) {
+			me = board[0][4];
+			enemy = board[8][4];
+		} else {
+			enemy = board[0][4];
+			me = board[8][4];
 		}
+		red = arg0;
 	}
 
 	@Override
@@ -47,5 +39,33 @@ public class NormalPlayer implements Player {
 
 	public static void riceviGameManager(Object gm) {
 		gameManager = gm;
+	}
+
+	private void initializeBoard() {
+		for (int i = 0; i < 9; i++) {
+			for (int k = 0; k < 9; k++) {
+				board[i][k] = new Node(i, k);
+			}
+		}
+		linkNode();
+	}
+
+	private void linkNode() {
+		for (int i = 0; i < 9; i++) {
+			for (int k = 0; k < 9; k++) {
+				if (i > 0) {
+					board[i][k].addNeighbor(board[i - 1][k]);
+				}
+				if (i < 8) {
+					board[i][k].addNeighbor(board[i + 1][k]);
+				}
+				if (k > 0) {
+					board[i][k].addNeighbor(board[i][k - 1]);
+				}
+				if (k < 8) {
+					board[i][k].addNeighbor(board[i][k + 1]);
+				}
+			}
+		}
 	}
 }
