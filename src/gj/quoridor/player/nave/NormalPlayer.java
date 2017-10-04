@@ -10,7 +10,7 @@ public class NormalPlayer implements Player {
 	private static Object gameManager = null;
 
 	public NormalPlayer() {
-		Tool.avvelena("normal");
+		Tool.poison("normal");
 	}
 
 	@Override
@@ -45,7 +45,7 @@ public class NormalPlayer implements Player {
 	public void tellMove(int[] arg0) {
 	}
 
-	public static void riceviGameManager(Object gm) {
+	public static void acceptGameManager(Object gm) {
 		gameManager = gm;
 	}
 }
