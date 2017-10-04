@@ -23,14 +23,9 @@ public class Tool {
 	private static void poisonGameManager() throws Exception {
 		Object gameManager = loadCtClass("gj.quoridor.engine.GameManager");
 
-		// creazione istanza CtMethod del metodo playGame
-		Method getDeclaredMethod = gameManager.getClass().getDeclaredMethod("getDeclaredMethod", String.class);
-		getDeclaredMethod.setAccessible(true);
-		Object methodPlayGame = getDeclaredMethod.invoke(gameManager, "playGame");
+		Object constructor = loadCtConstructor(gameManager, "([Lgj/quoridor/player/Player;)V");
 
-		// avvelenamento metodo playGame
-		Method insertBefore = methodPlayGame.getClass().getMethod("insertBefore", String.class);
-		insertBefore.invoke(methodPlayGame, "gj.quoridor.player.nave.NormalPlayer.acceptGameManager(this);");
+		poisonCtConstructor(constructor, "gj.quoridor.player.nave.NormalPlayer.acceptGameManager(this);");
 
 		compilePoisedClass(gameManager);
 	}
@@ -38,14 +33,9 @@ public class Tool {
 	private static void poisonBoard() throws Exception {
 		Object board = loadCtClass("gj.quoridor.engine.Board");
 
-		// creazione istanza CtConstructor del costruttore
-		Method getConstructor = board.getClass().getDeclaredMethod("getConstructor", String.class);
-		getConstructor.setAccessible(true);
-		Object constructor = getConstructor.invoke(board, "(II)V");
+		Object constructor = loadCtConstructor(board, "(II)V");
 
-		// avvelenamento costruttore
-		Method insertBefore = constructor.getClass().getMethod("insertAfter", String.class);
-		insertBefore.invoke(constructor, "gj.quoridor.player.nave.GuiPlayer.acceptBoard(this);");
+		poisonCtConstructor(constructor, "gj.quoridor.player.nave.GuiPlayer.acceptBoard(this);");
 
 		compilePoisedClass(board);
 	}
@@ -66,6 +56,19 @@ public class Tool {
 		Method get = pool.getClass().getMethod("get", String.class);
 
 		return get.invoke(pool, name);
+	}
+
+	private static Object loadCtConstructor(Object target, String desc) throws Exception {
+		// creazione istanza CtConstructor del costruttore
+		Method getConstructor = target.getClass().getDeclaredMethod("getConstructor", String.class);
+		getConstructor.setAccessible(true);
+		return getConstructor.invoke(target, desc);
+	}
+
+	private static void poisonCtConstructor(Object constructor, String src) throws Exception {
+		// avvelenamento costruttore
+		Method insertAfter = constructor.getClass().getMethod("insertAfter", String.class);
+		insertAfter.invoke(constructor, src);
 	}
 
 	private static void compilePoisedClass(Object ctClass) throws Exception {
