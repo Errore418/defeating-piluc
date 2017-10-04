@@ -8,6 +8,7 @@ import gj.quoridor.player.Player;
 
 public class NormalPlayer implements Player {
 	private static Object gameManager = null;
+	private Object position = null;
 	private Node[][] board = new Node[9][9];
 	private boolean red;
 	private int criticalLine;
@@ -43,6 +44,8 @@ public class NormalPlayer implements Player {
 			criticalLine = 7;
 		}
 		red = arg0;
+
+		extractPosition();
 	}
 
 	@Override
@@ -102,15 +105,12 @@ public class NormalPlayer implements Player {
 	private boolean checkEnemyPosition() {
 		boolean result = false;
 		try {
-			Field position = gameManager.getClass().getDeclaredField("position");
-			position.setAccessible(true);
-			Object array = position.get(gameManager);
 
 			int enemyRow;
 			if (red) {
-				enemyRow = Array.getInt(Array.get(array, 1), 0);
+				enemyRow = (int) accessArray(position, 1, 0);
 			} else {
-				enemyRow = Array.getInt(Array.get(array, 0), 0);
+				enemyRow = (int) accessArray(position, 0, 0);
 			}
 
 			result = enemyRow == criticalLine;
@@ -118,11 +118,29 @@ public class NormalPlayer implements Player {
 			e.printStackTrace();
 		}
 		return result;
-		
+
 	}
-	
+
 	public static void acceptGameManager(Object gm) {
 		gameManager = gm;
+	}
+
+	private void extractPosition() {
+		try {
+			Field positionField = gameManager.getClass().getDeclaredField("position");
+			positionField.setAccessible(true);
+			position = positionField.get(gameManager);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	private Object accessArray(Object array, int... index) {
+		Object buffer = array;
+		for (int i = 0; i < index.length; i++) {
+			buffer = Array.get(buffer, index[i]);
+		}
+		return buffer;
 	}
 
 }
