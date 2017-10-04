@@ -8,36 +8,32 @@ import java.net.URLClassLoader;
 public class Tool {
 	private static URLClassLoader urlCl = null;
 
-	public static void poison(String type) {
+	public static void poison(String mode) {
 		try {
-			if (type.equals("normal")) {
-				poisonGameManager();
+			if (mode.equals("normal")) {
+				poison("gj.quoridor.engine.GameManager", "([Lgj/quoridor/player/Player;)V",
+						"gj.quoridor.player.nave.NormalPlayer.acceptGameManager(this);", true);
 			} else {
-				poisonBoard();
+				poison("gj.quoridor.engine.Board", "(II)V", "gj.quoridor.player.nave.GuiPlayer.acceptBoard(this);",
+						false);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	private static void poisonGameManager() throws Exception {
-		Object gameManager = loadCtClass("gj.quoridor.engine.GameManager");
+	private static void poison(String clazz, String desc, String src, boolean isGameManager) throws Exception {
+		Object ctClass = loadCtClass(clazz);
 
-		Object constructor = loadCtConstructor(gameManager, "([Lgj/quoridor/player/Player;)V");
+		Object constructor = loadCtConstructor(ctClass, desc);
 
-		poisonCtConstructor(constructor, "gj.quoridor.player.nave.NormalPlayer.acceptGameManager(this);");
+		poisonCtConstructor(constructor, src);
 
-		compilePoisedClass(gameManager);
-	}
+		if (isGameManager) {
+			// TODO azzerare contatore mosse in playGame
+		}
 
-	private static void poisonBoard() throws Exception {
-		Object board = loadCtClass("gj.quoridor.engine.Board");
-
-		Object constructor = loadCtConstructor(board, "(II)V");
-
-		poisonCtConstructor(constructor, "gj.quoridor.player.nave.GuiPlayer.acceptBoard(this);");
-
-		compilePoisedClass(board);
+		compilePoisedClass(ctClass);
 	}
 
 	private static Object loadCtClass(String name) throws Exception {
@@ -49,17 +45,14 @@ public class Tool {
 		Class<?> classPool = urlCl.loadClass("javassist.ClassPool");
 
 		// creazione instanza ClassPool mediante metodo statico
-		Method getDefault = classPool.getMethod("getDefault");
-		Object pool = getDefault.invoke(null);
+		Object pool = classPool.getMethod("getDefault").invoke(null);
 
-		// creazione istanza CtClass della classe richiesta
-		Method get = pool.getClass().getMethod("get", String.class);
-
-		return get.invoke(pool, name);
+		// ritorno istanza CtClass della classe richiesta
+		return pool.getClass().getMethod("get", String.class).invoke(pool, name);
 	}
 
 	private static Object loadCtConstructor(Object target, String desc) throws Exception {
-		// creazione istanza CtConstructor del costruttore
+		// creazione istanza CtConstructor del costruttore della classe
 		Method getConstructor = target.getClass().getDeclaredMethod("getConstructor", String.class);
 		getConstructor.setAccessible(true);
 		return getConstructor.invoke(target, desc);
@@ -67,14 +60,12 @@ public class Tool {
 
 	private static void poisonCtConstructor(Object constructor, String src) throws Exception {
 		// avvelenamento costruttore
-		Method insertAfter = constructor.getClass().getMethod("insertAfter", String.class);
-		insertAfter.invoke(constructor, src);
+		constructor.getClass().getMethod("insertAfter", String.class).invoke(constructor, src);
 	}
 
 	private static void compilePoisedClass(Object ctClass) throws Exception {
 		// compilazione classe modificata
-		Method toClass = ctClass.getClass().getMethod("toClass");
-		toClass.invoke(ctClass);
+		ctClass.getClass().getMethod("toClass").invoke(ctClass);
 
 		// chiusura ClassLoader
 		urlCl.close();
