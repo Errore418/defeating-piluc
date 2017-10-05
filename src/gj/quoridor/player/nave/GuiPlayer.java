@@ -1,7 +1,6 @@
 package gj.quoridor.player.nave;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 
 import gj.quoridor.player.Player;
 
@@ -42,25 +41,13 @@ public class GuiPlayer implements Player {
 		catchThisBoard = false;
 		Object anotherBoard = constructorBoard.newInstance(9, 9);
 		catchThisBoard = true;
-		return retrievePrivateField(anotherBoard, "board");
-	}
-
-	private Object retrievePrivateField(Object target, String name) throws Exception {
-		Field field = target.getClass().getDeclaredField(name);
-		field.setAccessible(true);
-		return field.get(target);
-	}
-
-	private void insertPrivateField(Object target, String name, Object value) throws Exception {
-		Field field = target.getClass().getDeclaredField(name);
-		field.setAccessible(true);
-		field.set(target, value);
+		return Tool.retrievePrivateField(anotherBoard, "board");
 	}
 
 	private void resetBoard() {
 		try {
 			Object cleanBoard = generateCleanBoard();
-			insertPrivateField(board, "board", cleanBoard);
+			Tool.insertPrivateField(board, "board", cleanBoard);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

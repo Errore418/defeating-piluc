@@ -2,7 +2,6 @@ package gj.quoridor.player.nave;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.util.concurrent.ThreadLocalRandom;
 
 import gj.quoridor.player.Player;
@@ -30,57 +29,40 @@ public class NormalPlayer implements Player {
 		if (isEnemyInDangerPlace()) {
 			vadeRetro();
 		}
-
 		int[] move = new int[] { 0, -1 };
-
 		do {
 			move[1] = ThreadLocalRandom.current().nextInt(4);
 		} while (wrongMove(move));
-
 		return move;
 	}
 
 	private boolean wrongMove(int[] move) {
-		int meRow;
-		int meColumn;
-		int[] movement;
-		if (red) {
-			meRow = (int) accessArray(position, 0, 0);
-			meColumn = (int) accessArray(position, 0, 1);
-			movement = this.movement[0];
-		} else {
-			meRow = (int) accessArray(position, 1, 0);
-			meColumn = (int) accessArray(position, 1, 1);
-			movement = this.movement[1];
-		}
-
-		int direction = move[1];
-		int buffer;
-		if (direction < 2) {
-			buffer = meRow;
-		} else {
-			buffer = meColumn;
-		}
-
+		int[] mePosition = currentPosition(true);
+		int[] movement = (red) ? this.movement[0] : this.movement[1];
+		int buffer = (move[1] < 2) ? mePosition[0] : mePosition[1];
 		return (buffer + movement[move[1]] < 0) || (buffer + movement[move[1]] > 8);
 	}
 
 	@Override
 	public void start(boolean arg0) {
-		if (arg0) {
-			criticalLine = 1;
-		} else {
-			criticalLine = 7;
-		}
 		red = arg0;
-		retrievePosition();
-		retrieveBoard();
+		criticalLine = (red) ? 1 : 7;
+		try {
+			retrievePosition();
+			generateCleanBoard();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override
 	public void tellMove(int[] arg0) {
 		if (arg0[0] == 1) {
-			resetBoard();
+			try {
+				resetBoard();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -99,69 +81,36 @@ public class NormalPlayer implements Player {
 	}
 
 	private boolean isEnemyInDangerPlace() {
-		int enemyRow;
-		int enemyColumn;
-		if (red) {
-			enemyRow = (int) accessArray(position, 1, 0);
-			enemyColumn = (int) accessArray(position, 1, 1);
-		} else {
-			enemyRow = (int) accessArray(position, 0, 0);
-			enemyColumn = (int) accessArray(position, 1, 1);
-		}
-
+		int[] enemyPosition = currentPosition(false);
 		if (isEnemyConfused) {
-			return (enemyRow == criticalLine);
+			return (enemyPosition[0] == criticalLine);
 		} else {
-			return ((enemyRow == criticalLine) || (enemyColumn == 0) || (enemyColumn == 8));
+			return ((enemyPosition[0] == criticalLine) || (enemyPosition[1] == 0) || (enemyPosition[1] == 8));
 		}
 	}
 
-	private void resetBoard() {
-		insertPrivateField(gameManager, "board", cleanBoard);
+	private int[] currentPosition(boolean me) {
+		int index = (red ^ me) ? 1 : 0;
+		return (int[]) Tool.accessArray(position, index);
 	}
 
-	private void retrievePosition() {
-		position = retrievePrivateField(gameManager, "position");
+	private void resetBoard() throws Exception {
+		Tool.insertPrivateField(gameManager, "board", cleanBoard);
 	}
 
-	private void retrieveBoard() {
-		Object board = retrievePrivateField(gameManager, "board");		
+	private void retrievePosition() throws Exception {
+		position = Tool.retrievePrivateField(gameManager, "position");
+	}
+
+	private void generateCleanBoard() throws Exception {
+		Object board = Tool.retrievePrivateField(gameManager, "board");
 		try {
 			Constructor<?> constructorBoard = board.getClass().getDeclaredConstructor(int.class, int.class);
 			constructorBoard.setAccessible(true);
-			cleanBoard = constructorBoard.newInstance(9,9);
+			cleanBoard = constructorBoard.newInstance(9, 9);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
-
-	private Object retrievePrivateField(Object target, String name) {
-		try {
-			Field field = target.getClass().getDeclaredField(name);
-			field.setAccessible(true);
-			return field.get(target);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-
-	private void insertPrivateField(Object target, String name, Object value) {
-		try {
-			Field field = target.getClass().getDeclaredField(name);
-			field.setAccessible(true);
-			field.set(target, value);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	private Object accessArray(Object array, int... index) {
-		Object buffer = array;
-		for (int i = 0; i < index.length; i++) {
-			buffer = Array.get(buffer, index[i]);
-		}
-		return buffer;
 	}
 
 }

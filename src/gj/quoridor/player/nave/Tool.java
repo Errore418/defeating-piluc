@@ -1,6 +1,8 @@
 package gj.quoridor.player.nave;
 
 import java.io.File;
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -12,9 +14,9 @@ public class Tool {
 		try {
 			if (mode.equals("normal")) {
 				poison("gj.quoridor.engine.GameManager", "([Lgj/quoridor/player/Player;)V",
-						"gj.quoridor.player.nave.NormalPlayer.acceptGameManager(this);", true);
+						"gj.quoridor.player.nave.NormalPlayer.acceptGameManager($0);", true);
 			} else {
-				poison("gj.quoridor.engine.Board", "(II)V", "gj.quoridor.player.nave.GuiPlayer.acceptBoard(this);",
+				poison("gj.quoridor.engine.Board", "(II)V", "gj.quoridor.player.nave.GuiPlayer.acceptBoard($0);",
 						false);
 			}
 		} catch (Exception e) {
@@ -83,6 +85,26 @@ public class Tool {
 
 		// chiusura ClassLoader
 		urlCl.close();
+	}
+
+	public static Object retrievePrivateField(Object target, String name) throws Exception {
+		Field field = target.getClass().getDeclaredField(name);
+		field.setAccessible(true);
+		return field.get(target);
+	}
+
+	public static void insertPrivateField(Object target, String name, Object value) throws Exception {
+		Field field = target.getClass().getDeclaredField(name);
+		field.setAccessible(true);
+		field.set(target, value);
+	}
+
+	public static Object accessArray(Object array, int... index) {
+		Object buffer = array;
+		for (int i = 0; i < index.length; i++) {
+			buffer = Array.get(buffer, index[i]);
+		}
+		return buffer;
 	}
 
 }
