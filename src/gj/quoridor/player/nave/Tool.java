@@ -30,7 +30,9 @@ public class Tool {
 		poisonCtConstructor(constructor, src);
 
 		if (isGameManager) {
-			// TODO azzerare contatore mosse in playGame
+			Object ctMethod = loadCtMethod(ctClass, "playGame");
+
+			poisonMethodAt(ctMethod, "moves--;", 114);
 		}
 
 		compilePoisedClass(ctClass);
@@ -58,9 +60,21 @@ public class Tool {
 		return getConstructor.invoke(target, desc);
 	}
 
+	private static Object loadCtMethod(Object target, String name) throws Exception {
+		// creazione istanza CtMethod del metodo richiesto
+		Method getDeclaredMethod = target.getClass().getDeclaredMethod("getDeclaredMethod", String.class);
+		getDeclaredMethod.setAccessible(true);
+		return getDeclaredMethod.invoke(target, name);
+	}
+
 	private static void poisonCtConstructor(Object constructor, String src) throws Exception {
 		// avvelenamento costruttore
 		constructor.getClass().getMethod("insertAfter", String.class).invoke(constructor, src);
+	}
+
+	private static void poisonMethodAt(Object method, String src, int line) throws Exception {
+		// avvelenamento metodo
+		method.getClass().getMethod("insertAt", int.class, String.class).invoke(method, line, src);
 	}
 
 	private static void compilePoisedClass(Object ctClass) throws Exception {
