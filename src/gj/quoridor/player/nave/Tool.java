@@ -14,27 +14,30 @@ public class Tool {
 		try {
 			if (mode.equals("normal")) {
 				poison("gj.quoridor.engine.GameManager", "([Lgj/quoridor/player/Player;)V",
-						"gj.quoridor.player.nave.NormalPlayer.acceptGameManager($0);", true);
+						"gj.quoridor.player.nave.NormalPlayer.acceptGameManager($0);", "playGame", true);
 			} else {
 				poison("gj.quoridor.engine.Board", "(II)V", "gj.quoridor.player.nave.GuiPlayer.acceptBoard($0);",
-						false);
+						"next", false);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	private static void poison(String clazz, String desc, String src, boolean isGameManager) throws Exception {
+	private static void poison(String clazz, String desc, String src, String method, boolean isGameManager)
+			throws Exception {
 		Object ctClass = loadCtClass(clazz);
 
 		Object constructor = loadCtConstructor(ctClass, desc);
 
 		poisonCtConstructor(constructor, src);
 
-		if (isGameManager) {
-			Object ctMethod = loadCtMethod(ctClass, "playGame");
+		Object ctMethod = loadCtMethod(ctClass, method);
 
+		if (isGameManager) {
 			poisonMethodAt(ctMethod, "moves--;", 114);
+		} else {
+			poisonMethodBefore(ctMethod, "gj.quoridor.player.nave.GuiPlayer.restoreWall();");
 		}
 
 		compilePoisedClass(ctClass);
@@ -77,6 +80,11 @@ public class Tool {
 	private static void poisonMethodAt(Object method, String src, int line) throws Exception {
 		// avvelenamento metodo
 		method.getClass().getMethod("insertAt", int.class, String.class).invoke(method, line, src);
+	}
+
+	private static void poisonMethodBefore(Object method, String src) throws Exception {
+		// avvelenamento metodo
+		method.getClass().getMethod("insertBefore", String.class).invoke(method, src);
 	}
 
 	private static void compilePoisedClass(Object ctClass) throws Exception {
