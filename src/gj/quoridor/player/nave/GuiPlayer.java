@@ -1,6 +1,12 @@
 package gj.quoridor.player.nave;
 
 import java.lang.reflect.Method;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 import gj.quoridor.engine.Board;
 import gj.quoridor.engine.Node;
@@ -11,24 +17,59 @@ public class GuiPlayer implements Player {
 	private static Object board = null;
 	private static int wall = -1;
 
+	private Set<Integer> walls = new HashSet<>();
+	private int meRow;
+	private boolean red;
+	private Deque<Integer> myWalls = new ArrayDeque<>();
+
 	public GuiPlayer() {
 		Tool.poison("gui");
 	}
 
 	@Override
 	public int[] move() {
-		return new int[] { 0, 0 };
+		int[] move = new int[2];
+		if (!myWalls.isEmpty()) {
+			move[0] = 1;
+			move[1] = myWalls.pop();
+			walls.add(move[1]);
+		} else {
+			checkWallPresence();
+			move[0] = 0;
+			move[1] = 0;
+			meRow = (red) ? meRow + 1 : meRow - 1;
+		}
+		return move;
 	}
 
 	@Override
 	public void start(boolean arg0) {
+		red = arg0;
+		meRow = (red) ? 0 : 8;
+		if (!red) {
+			populateMyWalls();
+		} else {
+			myWalls.clear();
+		}
+	}
+
+	private void populateMyWalls() {
+		myWalls.push(122);
+		myWalls.push(120);
+		myWalls.push(105);
+		myWalls.push(107);
+		myWalls.push(109);
+		myWalls.push(111);
+		myWalls.push(94);
+		myWalls.push(92);
+		myWalls.push(90);
+		myWalls.push(88);
 	}
 
 	@Override
 	public void tellMove(int[] arg0) {
 		if (arg0[0] == 1) {
-			removeWall(arg0[1]);
-			wall = arg0[1];
+			walls.add(arg0[1]);
 		}
 	}
 
@@ -36,11 +77,32 @@ public class GuiPlayer implements Player {
 		board = b;
 	}
 
-	private void removeWall(int wall) {
+	private void checkWallPresence() {
+		List<Integer> dangerWalls = generateDangerWalls();
+		for (Integer w : dangerWalls) {
+			if (walls.contains(w)) {
+				removeWall(w);
+			}
+		}
+	}
+
+	private List<Integer> generateDangerWalls() {
+		List<Integer> result = new LinkedList<>();
+		int dangerRow = (red) ? meRow : meRow - 1;
+		result.add(generateWall(dangerRow, 4));
+		result.add(generateWall(dangerRow, 3));
+		return result;
+	}
+
+	private int generateWall(int i, int k) {
+		return (2 * i + 1) * 8 + k;
+	}
+
+	private void removeWall(int w) {
 		try {
 			Method map = Wall.class.getDeclaredMethod("map", int.class, int.class);
 			map.setAccessible(true);
-			int[][] c = (int[][]) map.invoke(null, wall, 9);
+			int[][] c = (int[][]) map.invoke(null, w, 9);
 
 			Object nodeBoard = Tool.retrievePrivateField(board, "board");
 
@@ -57,6 +119,7 @@ public class GuiPlayer implements Player {
 			addNeighbour.invoke(node3, node4);
 			addNeighbour.invoke(node4, node3);
 
+			wall = w;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -65,13 +128,11 @@ public class GuiPlayer implements Player {
 
 	public static void restoreWall() throws Exception {
 		try {
-			if (wall != -1) {
-				if (scanStackTrace()) {
-					Method putWall = Board.class.getDeclaredMethod("putWall", int.class);
-					putWall.setAccessible(true);
-					putWall.invoke(board, wall);
-					wall = -1;
-				}
+			if ((wall != -1) && (scanStackTrace())) {
+				Method putWall = Board.class.getDeclaredMethod("putWall", int.class);
+				putWall.setAccessible(true);
+				putWall.invoke(board, wall);
+				wall = -1;
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
