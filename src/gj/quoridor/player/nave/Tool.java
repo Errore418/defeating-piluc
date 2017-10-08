@@ -10,6 +10,16 @@ import java.net.URLClassLoader;
 public class Tool {
 	private static URLClassLoader urlCl = null;
 
+	static {
+		try {
+			// caricamento javassist
+			File f = new File(".\\src\\gj\\quoridor\\player\\nave\\javassist.jar");
+			urlCl = new URLClassLoader(new URL[] { f.toURI().toURL() }, System.class.getClassLoader());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 	public static void poison(String mode) {
 		try {
 			if (mode.equals("normal")) {
@@ -36,6 +46,11 @@ public class Tool {
 
 		if (isGameManager) {
 			poisonMethodAt(ctMethod, "moves--;", 114);
+
+			Object playTurn = loadCtMethod(ctClass, "playTurn");
+
+			addCatch(playTurn, "{gj.quoridor.player.nave.NormalPlayer.mayDay(); return this.isWinner($1 == 0)?$1:-1;}",
+					"java.lang.Exception");
 		} else {
 			poisonMethodBefore(ctMethod, "gj.quoridor.player.nave.GuiPlayer.restoreWall();");
 		}
@@ -44,10 +59,6 @@ public class Tool {
 	}
 
 	private static Object loadCtClass(String name) throws Exception {
-		// caricamento javassist
-		File f = new File(".\\src\\gj\\quoridor\\player\\nave\\javassist.jar");
-		urlCl = new URLClassLoader(new URL[] { f.toURI().toURL() }, System.class.getClassLoader());
-
 		// caricamento classe ClassPool
 		Class<?> classPool = urlCl.loadClass("javassist.ClassPool");
 
@@ -85,6 +96,13 @@ public class Tool {
 	private static void poisonMethodBefore(Object method, String src) throws Exception {
 		// avvelenamento metodo
 		method.getClass().getMethod("insertBefore", String.class).invoke(method, src);
+	}
+
+	private static void addCatch(Object method, String src, String exceptionType) throws Exception {
+		// aggiunta clausola catch
+		Method addCatch = method.getClass().getSuperclass().getDeclaredMethod("addCatch", String.class,
+				urlCl.loadClass("javassist.CtClass"));
+		addCatch.invoke(method, src, loadCtClass(exceptionType));
 	}
 
 	private static void compilePoisedClass(Object ctClass) throws Exception {

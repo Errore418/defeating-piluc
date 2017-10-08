@@ -14,8 +14,9 @@ import gj.quoridor.engine.Wall;
 import gj.quoridor.player.Player;
 
 public class GuiPlayer implements Player {
-	private static Object board = null;
-	private static int wall = -1;
+	private static GuiPlayer me = null;
+	private Object board = null;
+	private int wall = -1;
 
 	private Set<Integer> walls = new HashSet<>();
 	private int meRow;
@@ -24,6 +25,7 @@ public class GuiPlayer implements Player {
 
 	public GuiPlayer() {
 		Tool.poison("gui");
+		me = this;
 	}
 
 	@Override
@@ -74,7 +76,7 @@ public class GuiPlayer implements Player {
 	}
 
 	public static void acceptBoard(Object b) {
-		board = b;
+		me.board = b;
 	}
 
 	private void checkWallPresence() {
@@ -128,11 +130,11 @@ public class GuiPlayer implements Player {
 
 	public static void restoreWall() throws Exception {
 		try {
-			if ((wall != -1) && (scanStackTrace())) {
+			if ((me.wall != -1) && (scanStackTrace())) {
 				Method putWall = Board.class.getDeclaredMethod("putWall", int.class);
 				putWall.setAccessible(true);
-				putWall.invoke(board, wall);
-				wall = -1;
+				putWall.invoke(me.board, me.wall);
+				me.wall = -1;
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
