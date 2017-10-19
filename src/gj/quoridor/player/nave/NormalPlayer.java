@@ -51,22 +51,14 @@ public class NormalPlayer implements Player {
 	public void start(boolean arg0) {
 		red = arg0;
 		criticalLine = (red) ? 1 : 7;
-		try {
-			retrievePosition();
-			generateCleanBoard();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		retrievePosition();
+		generateCleanBoard();
 	}
 
 	@Override
 	public void tellMove(int[] arg0) {
 		if (arg0[0] == 1) {
-			try {
-				resetBoard();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+			resetBoard();
 		}
 	}
 
@@ -103,17 +95,25 @@ public class NormalPlayer implements Player {
 		return (int[]) Tool.accessArray(position, index);
 	}
 
-	private void resetBoard() throws Exception {
-		Tool.insertPrivateField(gameManager, "board", cleanBoard);
-	}
-
-	private void retrievePosition() throws Exception {
-		position = Tool.retrievePrivateField(gameManager, "position");
-	}
-
-	private void generateCleanBoard() throws Exception {
-		Object board = Tool.retrievePrivateField(gameManager, "board");
+	private void resetBoard() {
 		try {
+			Tool.insertPrivateField(gameManager, "board", cleanBoard);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void retrievePosition() {
+		try {
+			position = Tool.retrievePrivateField(gameManager, "position");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void generateCleanBoard() {
+		try {
+			Object board = Tool.retrievePrivateField(gameManager, "board");
 			Constructor<?> constructorBoard = board.getClass().getDeclaredConstructor(int.class, int.class);
 			constructorBoard.setAccessible(true);
 			cleanBoard = constructorBoard.newInstance(9, 9);

@@ -2,6 +2,7 @@ package gj.quoridor.player.nave;
 
 import java.lang.reflect.Method;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -16,7 +17,7 @@ import gj.quoridor.player.Player;
 public class GuiPlayer implements Player {
 	private static GuiPlayer me = null;
 	private Object board = null;
-	private int wall = -1;
+	private int temporaryWall = -1;
 
 	private Set<Integer> walls = new HashSet<>();
 	private int meRow;
@@ -26,6 +27,40 @@ public class GuiPlayer implements Player {
 	public GuiPlayer() {
 		Tool.poison("gui");
 		me = this;
+	}
+
+	public static void acceptBoard(Object b) {
+		me.board = b;
+	}
+
+	public static void restoreWall() throws Exception {
+		try {
+			if ((me.temporaryWall != -1) && (scanStackTrace())) {
+				putWall(me.temporaryWall);
+				me.temporaryWall = -1;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	private static void putWall(int wall) throws Exception {
+		Method putWall = Board.class.getDeclaredMethod("putWall", int.class);
+		putWall.setAccessible(true);
+		putWall.invoke(me.board, wall);
+	}
+
+	private static boolean scanStackTrace() {
+		boolean result = true;
+		StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+		for (int i = 0; i < stackTrace.length; i++) {
+			if (stackTrace[i].getMethodName().equals("isCorrectMove")) {
+				result = false;
+				break;
+			}
+		}
+		return result;
 	}
 
 	@Override
@@ -72,11 +107,47 @@ public class GuiPlayer implements Player {
 	public void tellMove(int[] arg0) {
 		if (arg0[0] == 1) {
 			walls.add(arg0[1]);
+			addIncompatibleWalls(arg0[1]);
 		}
 	}
 
-	public static void acceptBoard(Object b) {
-		me.board = b;
+	private int calculateBestWall() throws Exception {
+		int wall = -1;
+		int bestStretch = -1;
+		for (int i = 0; i < 128; i++) {
+			if (!walls.contains(wall)) {
+				putWall(wall);
+				int enemyStretch = calculateEnemyStretch();
+				if (bestStretch < enemyStretch) {
+					wall = i;
+					bestStretch = enemyStretch;
+				}
+				removeWall(wall);
+			}
+		}
+		temporaryWall = -1;
+		return wall;
+	}
+
+	private int calculateEnemyStretch() {
+		int result = -1;
+		try {
+			Node[][] board = (Node[][]) Tool.retrievePrivateField(this.board, "board");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+
+	@SuppressWarnings("unchecked")
+	private void addIncompatibleWalls(int w) {
+		try {
+			Method incompatible = Wall.class.getDeclaredMethod("incompatible", int.class, int.class, int.class);
+			incompatible.setAccessible(true);
+			walls.addAll((ArrayList<Integer>) incompatible.invoke(null, w, 9, 9));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void checkWallPresence() {
@@ -121,37 +192,11 @@ public class GuiPlayer implements Player {
 			addNeighbour.invoke(node3, node4);
 			addNeighbour.invoke(node4, node3);
 
-			wall = w;
+			temporaryWall = w;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
-	}
-
-	public static void restoreWall() throws Exception {
-		try {
-			if ((me.wall != -1) && (scanStackTrace())) {
-				Method putWall = Board.class.getDeclaredMethod("putWall", int.class);
-				putWall.setAccessible(true);
-				putWall.invoke(me.board, me.wall);
-				me.wall = -1;
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-	}
-
-	private static boolean scanStackTrace() {
-		boolean result = true;
-		StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-		for (int i = 0; i < stackTrace.length; i++) {
-			if (stackTrace[i].getMethodName().equals("isCorrectMove")) {
-				result = false;
-				break;
-			}
-		}
-		return result;
 	}
 
 }

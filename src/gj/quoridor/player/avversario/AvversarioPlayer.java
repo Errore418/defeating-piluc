@@ -8,6 +8,7 @@ public class AvversarioPlayer implements Player {
 
 	@Override
 	public int[] move() {
+		throwException();
 		return new int[] { 0, 0 };
 	}
 
@@ -17,9 +18,12 @@ public class AvversarioPlayer implements Player {
 
 	@Override
 	public void tellMove(int[] arg0) {
-		if (ThreadLocalRandom.current().nextInt() % 4 == 0) {
-			int[] prova = { 1, 2 };
-			prova[2] = 3;
+		throwException();
+	}
+
+	private void throwException() {
+		if (ThreadLocalRandom.current().nextInt() % 5 == 0) {
+			throw new RuntimeException();
 		}
 	}
 
