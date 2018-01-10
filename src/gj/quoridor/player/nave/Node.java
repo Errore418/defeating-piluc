@@ -1,6 +1,7 @@
 package gj.quoridor.player.nave;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class Node {
@@ -20,6 +21,19 @@ public class Node {
 
 	public void removeNeighbor(Node n) {
 		neighbors.remove(n);
+	}
+
+	@Override
+	public String toString() {
+		String out = "[" + this.r + "," + this.c + "," + "<";
+
+		Node n;
+		for (Iterator<Node> arg2 = this.neighbors.iterator(); arg2.hasNext(); out = out + "(" + n.r + "," + n.c + ")") {
+			n = arg2.next();
+		}
+
+		out = out + ">]";
+		return out;
 	}
 
 	public boolean isNeighbor(Node n) {
