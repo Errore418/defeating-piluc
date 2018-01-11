@@ -7,11 +7,11 @@ public class NavePlayer implements Player {
 
 	public NavePlayer() {
 		StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-		for (int i = 0; i < stackTrace.length; i++) {
-			if (stackTrace[i].getClassName().equalsIgnoreCase("gj.quoridor.engine.quoridor")) {
+		for (StackTraceElement s : stackTrace) {
+			if (s.getClassName().equals("gj.quoridor.engine.Quoridor")) {
 				evilPlayer = new NormalPlayer();
 				break;
-			} else if (stackTrace[i].getClassName().equalsIgnoreCase("gj.quoridor.engine.quoridorgui")) {
+			} else if (s.getClassName().equals("gj.quoridor.engine.QuoridorGUI")) {
 				evilPlayer = new GuiPlayer();
 				break;
 			}

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Queue;
 
 public class Path {
+
 	private static class Wrapper {
 		private Node node;
 		private Wrapper parent;
@@ -21,66 +22,34 @@ public class Path {
 	}
 
 	public static int shortPath(Node start, int goal) {
-		boolean[][] control = initControl();
-
-		Queue<Wrapper> frangia = new LinkedList<>();
-		markNode(control, start);
-		frangia.add(new Wrapper(start));
-
-		while (!frangia.isEmpty()) {
-
-			Wrapper current = frangia.poll();
-
-			for (Node n : current.node.getNeighbors()) {
-
-				if (!isMarked(control, n)) {
-
+		boolean[][] control = new boolean[9][9];
+		Queue<Wrapper> queue = new LinkedList<>();
+		control[start.getRow()][start.getColumn()] = true;
+		queue.add(new Wrapper(start));
+		while (!queue.isEmpty()) {
+			Wrapper current = queue.poll();
+			for (Node n : current.node.getnNeighbours()) {
+				if (!control[n.getRow()][n.getColumn()]) {
 					Wrapper buffer = new Wrapper(n, current);
-
-					if (n.getR() == goal) {
+					if (n.getRow() == goal) {
 						return buildPath(buffer);
 					}
-
-					frangia.add(buffer);
-					markNode(control, n);
-
+					queue.add(buffer);
+					control[n.getRow()][n.getColumn()] = true;
 				}
-
 			}
-
 		}
-
 		return -1;
 	}
 
 	private static int buildPath(Wrapper start) {
 		List<Node> result = new LinkedList<>();
-
 		Wrapper buffer = start;
 		while (buffer != null) {
 			result.add(buffer.node);
 			buffer = buffer.parent;
 		}
-
 		return result.size();
-	}
-
-	private static boolean isMarked(boolean[][] control, Node node) {
-		return control[node.getR()][node.getC()];
-	}
-
-	private static void markNode(boolean[][] control, Node node) {
-		control[node.getR()][node.getC()] = true;
-	}
-
-	private static boolean[][] initControl() {
-		boolean[][] result = new boolean[9][9];
-		for (int i = 0; i < 9; i++) {
-			for (int k = 0; k < 9; k++) {
-				result[i][k] = false;
-			}
-		}
-		return result;
 	}
 
 }

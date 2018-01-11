@@ -52,7 +52,7 @@ public class Tool {
 			addCatch(playTurn, "{gj.quoridor.player.nave.NormalPlayer.mayDay(); return this.isWinner($1 == 0)?$1:-1;}",
 					"java.lang.Exception");
 		} else {
-			poisonMethodBefore(ctMethod, "gj.quoridor.player.nave.GuiPlayer.restoreWall();");
+			poisonMethodBefore(ctMethod, "gj.quoridor.player.nave.GuiPlayer.restoreWallGameBoard();");
 		}
 
 		compilePoisedClass(ctClass);

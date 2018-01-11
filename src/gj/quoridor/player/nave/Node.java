@@ -1,43 +1,38 @@
 package gj.quoridor.player.nave;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Node {
 
-	private final int r, c;
-	private List<Node> neighbors;
+	private final int row, column;
+	private Set<Node> neighbours;
 
-	public Node(int r, int c) {
-		this.r = r;
-		this.c = c;
-		neighbors = new ArrayList<>();
+	public Node(int row, int column) {
+		this.row = row;
+		this.column = column;
+		neighbours = new HashSet<>();
 	}
 
-	public void addNeighbor(Node n) {
-		neighbors.add(n);
+	public void addNeighbour(Node n) {
+		neighbours.add(n);
 	}
 
-	public void removeNeighbor(Node n) {
-		neighbors.remove(n);
+	public void removeNeighbour(Node n) {
+		neighbours.remove(n);
+	}
+
+	public boolean isNeighbour(Node n) {
+		return neighbours.contains(n);
 	}
 
 	@Override
-	public String toString() {
-		String out = "[" + this.r + "," + this.c + "," + "<";
-
-		Node n;
-		for (Iterator<Node> arg2 = this.neighbors.iterator(); arg2.hasNext(); out = out + "(" + n.r + "," + n.c + ")") {
-			n = arg2.next();
-		}
-
-		out = out + ">]";
-		return out;
-	}
-
-	public boolean isNeighbor(Node n) {
-		return neighbors.contains(n);
+	public int hashCode() {
+		final int prime = 11;
+		int result = 1;
+		result = prime * result + column;
+		result = prime * result + row;
+		return result;
 	}
 
 	@Override
@@ -49,23 +44,23 @@ public class Node {
 		if (getClass() != obj.getClass())
 			return false;
 		Node other = (Node) obj;
-		if (c != other.c)
+		if (column != other.column)
 			return false;
-		if (r != other.r)
+		if (row != other.row)
 			return false;
 		return true;
 	}
 
-	public List<Node> getNeighbors() {
-		return neighbors;
+	public Set<Node> getnNeighbours() {
+		return neighbours;
 	}
 
-	public int getR() {
-		return r;
+	public int getRow() {
+		return row;
 	}
 
-	public int getC() {
-		return c;
+	public int getColumn() {
+		return column;
 	}
 
 }

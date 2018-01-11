@@ -16,14 +16,9 @@ public class GuiPlayer implements Player {
 
 	private Map<Integer, Boolean> walls;
 	private boolean red;
-
 	private Node[][] myBoard = new Node[9][9];
-
 	private Node myPosition;
 	private Node enemyPosition;
-
-	private int[][] allDirections = new int[][] { { 1, -1, 1, -1 }, { -1, 1, -1, 1 } }; // il primo array è il rosso
-
 	private int availableWall;
 
 	public GuiPlayer() {
@@ -35,15 +30,15 @@ public class GuiPlayer implements Player {
 		me.gameBoard = b;
 	}
 
-	public static void restoreWall() {
+	public static void restoreWallGameBoard() {
 		if ((me.temporaryWall != -1) && (scanStackTrace())) {
-			putWall(me.temporaryWall);
+			putWallGameBoard(me.temporaryWall);
 			me.temporaryWall = -1;
 		}
 
 	}
 
-	private static void putWall(int wall) {
+	private static void putWallGameBoard(int wall) {
 		try {
 			Method putWall = Board.class.getDeclaredMethod("putWall", int.class);
 			putWall.setAccessible(true);
@@ -56,33 +51,13 @@ public class GuiPlayer implements Player {
 	private static boolean scanStackTrace() {
 		boolean result = true;
 		StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-		for (int i = 0; i < stackTrace.length; i++) {
-			if (stackTrace[i].getMethodName().equals("isCorrectMove")) {
+		for (StackTraceElement s : stackTrace) {
+			if (s.getMethodName().equals("isCorrectMove")) {
 				result = false;
 				break;
 			}
 		}
 		return result;
-	}
-
-	@Override
-	public int[] move() {
-		int[] move = new int[2];
-		if (!red && availableWall > 0 && Path.shortPath(enemyPosition, red ? 0 : 8) < 10) {
-			move[0] = 1;
-			move[1] = calculateBestWall();
-			walls.put(move[1], true);
-			addIncompatibleWalls(move[1]);
-			temporaryWall = move[1];
-			availableWall--;
-		} else {
-			checkWallPresence();
-			move[0] = 0;
-			move[1] = 0;
-			int nextRow = red ? myPosition.getR() + 1 : myPosition.getR() - 1;
-			myPosition = myBoard[nextRow][myPosition.getC()];
-		}
-		return move;
 	}
 
 	@Override
@@ -104,16 +79,16 @@ public class GuiPlayer implements Player {
 		for (int i = 0; i < 9; i++) {
 			for (int k = 0; k < 9; k++) {
 				if (i != 0) {
-					myBoard[i][k].addNeighbor(myBoard[i - 1][k]);
+					myBoard[i][k].addNeighbour(myBoard[i - 1][k]);
 				}
 				if (i != 8) {
-					myBoard[i][k].addNeighbor(myBoard[i + 1][k]);
+					myBoard[i][k].addNeighbour(myBoard[i + 1][k]);
 				}
 				if (k != 0) {
-					myBoard[i][k].addNeighbor(myBoard[i][k - 1]);
+					myBoard[i][k].addNeighbour(myBoard[i][k - 1]);
 				}
 				if (k != 8) {
-					myBoard[i][k].addNeighbor(myBoard[i][k + 1]);
+					myBoard[i][k].addNeighbour(myBoard[i][k + 1]);
 				}
 			}
 		}
@@ -124,26 +99,19 @@ public class GuiPlayer implements Player {
 		if (arg0[0] == 1) {
 			updateWall(arg0[1]);
 		} else {
-			enemyPosition = movePlayer(enemyPosition, arg0[1], false);
+			moveEnemy(arg0[1]);
 		}
 	}
 
-	private int calculateBestWall() {
-		int wall = -1;
-		int bestStretch = -1;
-		for (int i = 0; i < 128; i++) {
-			if (!walls.containsKey(i)) {
-				putWallMyBoard(i);
-				int enemyStretch = Path.shortPath(enemyPosition, red ? 0 : 8);
-				if (bestStretch < enemyStretch) {
-					wall = i;
-					bestStretch = enemyStretch;
-				}
-				removeWallMyBoard(i);
-			}
+	private void moveEnemy(int direction) {
+		int[] directions = red ? new int[] { -1, 1, -1, 1 } : new int[] { 1, -1, 1, -1 };
+		int newR = enemyPosition.getRow(), newC = enemyPosition.getColumn();
+		if (direction < 2) {
+			newR += directions[direction];
+		} else {
+			newC += directions[direction];
 		}
-		updateWall(wall);
-		return wall;
+		enemyPosition = myBoard[newR][newC];
 	}
 
 	private void updateWall(int wall) {
@@ -152,45 +120,82 @@ public class GuiPlayer implements Player {
 		putWallMyBoard(wall);
 	}
 
+	private void addIncompatibleWalls(int w) {
+		List<Integer> incompatibleWalls = Wall.incompatible(w);
+		incompatibleWalls.forEach(i -> walls.put(i, false));
+	}
+
 	private void putWallMyBoard(int wall) {
 		Node[][] fracture = Wall.fracture(myBoard, wall);
-		fracture[0][0].removeNeighbor(fracture[0][1]);
-		fracture[0][1].removeNeighbor(fracture[0][0]);
-		fracture[1][0].removeNeighbor(fracture[1][1]);
-		fracture[1][1].removeNeighbor(fracture[1][0]);
+		fracture[0][0].removeNeighbour(fracture[0][1]);
+		fracture[0][1].removeNeighbour(fracture[0][0]);
+		fracture[1][0].removeNeighbour(fracture[1][1]);
+		fracture[1][1].removeNeighbour(fracture[1][0]);
 	}
 
 	private void removeWallMyBoard(int wall) {
 		Node[][] patch = Wall.fracture(myBoard, wall);
-		patch[0][0].addNeighbor(patch[0][1]);
-		patch[0][1].addNeighbor(patch[0][0]);
-		patch[1][0].addNeighbor(patch[1][1]);
-		patch[1][1].addNeighbor(patch[1][0]);
+		patch[0][0].addNeighbour(patch[0][1]);
+		patch[0][1].addNeighbour(patch[0][0]);
+		patch[1][0].addNeighbour(patch[1][1]);
+		patch[1][1].addNeighbour(patch[1][0]);
 	}
 
-	private void addIncompatibleWalls(int w) {
-		List<Integer> incompatibleWalls = Wall.incompatible(w);
-		incompatibleWalls.forEach(i -> walls.put(i, false));
+	@Override
+	public int[] move() {
+		int[] move = new int[2];
+		if (!red && availableWall > 0 && Path.shortPath(enemyPosition, red ? 0 : 8) < 10) {
+			move[0] = 1;
+			move[1] = calculateBestWall();
+			updateWall(move[1]);
+			availableWall--;
+		} else {
+			checkWallPresence();
+			move[0] = 0;
+			move[1] = 0;
+			int nextRow = red ? myPosition.getRow() + 1 : myPosition.getRow() - 1;
+			myPosition = myBoard[nextRow][myPosition.getColumn()];
+		}
+		return move;
+	}
+
+	private int calculateBestWall() {
+		int wall = -1;
+		int bestLength = -1;
+		for (int i = 0; i < 128; i++) {
+			if (!walls.containsKey(i)) {
+				putWallMyBoard(i);
+				int myLength = Path.shortPath(myPosition, red ? 8 : 0);
+				int enemyLength = Path.shortPath(enemyPosition, red ? 0 : 8);
+				if (bestLength < enemyLength && myLength > -1) {
+					wall = i;
+					bestLength = enemyLength;
+				}
+				removeWallMyBoard(i);
+			}
+		}
+		return wall;
 	}
 
 	private void checkWallPresence() {
 		List<Integer> dangerWalls = generateDangerWalls();
 		for (Integer w : dangerWalls) {
 			if (walls.containsKey(w) && walls.get(w)) {
-				removeWall(w);
+				removeWallGameBoard(w);
 			}
 		}
 	}
 
 	private List<Integer> generateDangerWalls() {
 		List<Integer> result = new LinkedList<>();
-		int dangerRow = red ? myPosition.getR() : myPosition.getR() - 1;
-		result.add(Wall.generateWall(dangerRow, myPosition.getC()));
-		result.add(Wall.generateWall(dangerRow, myPosition.getC() - 1));
+		int dangerRow = red ? myPosition.getRow() : myPosition.getRow() - 1;
+		for (int i = 0; i < 2; i++) {
+			result.add((2 * dangerRow + 1) * 8 + myPosition.getColumn() - i);
+		}
 		return result;
 	}
 
-	private void removeWall(int w) {
+	private void removeWallGameBoard(int w) {
 		try {
 			Method map = gj.quoridor.engine.Wall.class.getDeclaredMethod("map", int.class, int.class);
 			map.setAccessible(true);
@@ -198,36 +203,26 @@ public class GuiPlayer implements Player {
 
 			Object nodeBoard = Tool.retrievePrivateField(gameBoard, "board");
 
-			Object node1 = Tool.accessArray(nodeBoard, c[0][0], c[0][1]);
-			Object node2 = Tool.accessArray(nodeBoard, c[0][2], c[0][3]);
-			Object node3 = Tool.accessArray(nodeBoard, c[1][0], c[1][1]);
-			Object node4 = Tool.accessArray(nodeBoard, c[1][2], c[1][3]);
+			Object[][] fracture = new Object[2][2];
+			fracture[0][0] = Tool.accessArray(nodeBoard, c[0][0], c[0][1]);
+			fracture[0][1] = Tool.accessArray(nodeBoard, c[0][2], c[0][3]);
+			fracture[1][0] = Tool.accessArray(nodeBoard, c[1][0], c[1][1]);
+			fracture[1][1] = Tool.accessArray(nodeBoard, c[1][2], c[1][3]);
 
 			Method addNeighbour = gj.quoridor.engine.Node.class.getDeclaredMethod("addNeighbour",
 					gj.quoridor.engine.Node.class);
 			addNeighbour.setAccessible(true);
 
-			addNeighbour.invoke(node1, node2);
-			addNeighbour.invoke(node2, node1);
-			addNeighbour.invoke(node3, node4);
-			addNeighbour.invoke(node4, node3);
+			addNeighbour.invoke(fracture[0][0], fracture[0][1]);
+			addNeighbour.invoke(fracture[0][1], fracture[0][0]);
+			addNeighbour.invoke(fracture[1][0], fracture[1][1]);
+			addNeighbour.invoke(fracture[1][1], fracture[1][0]);
 
 			temporaryWall = w;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
-	}
-
-	private Node movePlayer(Node start, int direction, boolean myMovement) {
-		int[] directions = (red ^ myMovement) ? allDirections[1] : allDirections[0];
-		int newR = start.getR(), newC = start.getC();
-		if (direction < 2) {
-			newR += directions[direction];
-		} else {
-			newC += directions[direction];
-		}
-		return myBoard[newR][newC];
 	}
 
 }
